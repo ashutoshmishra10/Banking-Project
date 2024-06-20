@@ -3,7 +3,7 @@
 #define BANK_H
 
 #define MAX_CUSTOMERS 100
-#define MAX_NAME_LENGTH 50
+#define MAX_NAME_LENGTH 502
 #define MAX_PASSBOOK_ENTRIES 100
 
 typedef struct {
