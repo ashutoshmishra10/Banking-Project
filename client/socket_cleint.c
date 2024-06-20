@@ -45,17 +45,46 @@ void communicate_with_server(int client_socket) {
     char buffer[256];
     int account_number;
     double amount;
+    int choice;
 
-    // Example interaction: deposit money
-    printf("Enter account number: ");
-    scanf("%d", &account_number);
-    printf("Enter amount to deposit: ");
-    scanf("%lf", &amount);
+    while (1) {
+        printf("1. Deposit\n2. Withdraw\n3. Check Passbook\n4. Exit\nEnter your choice: ");
+        scanf("%d", &choice);
 
-    sprintf(buffer, "deposit %d %lf", account_number, amount);
-    send(client_socket, buffer, strlen(buffer), 0);
-
-    // Receive response
-    recv(client_socket, buffer, sizeof(buffer), 0);
-    printf("Server response: %s\n", buffer);
+        switch (choice) {
+            case 1:
+                printf("Enter account number: ");
+                scanf("%d", &account_number);
+                printf("Enter amount to deposit: ");
+                scanf("%lf", &amount);
+                sprintf(buffer, "deposit %d %lf", account_number, amount);
+                send(client_socket, buffer, strlen(buffer), 0);
+                recv(client_socket, buffer, sizeof(buffer), 0);
+                printf("Server response: %s\n", buffer);
+                break;
+            case 2:
+                printf("Enter account number: ");
+                scanf("%d", &account_number);
+                printf("Enter amount to withdraw: ");
+                scanf("%lf", &amount);
+                sprintf(buffer, "withdraw %d %lf", account_number, amount);
+                send(client_socket, buffer, strlen(buffer), 0);
+                recv(client_socket, buffer, sizeof(buffer), 0);
+                printf("Server response: %s\n", buffer);
+                break;
+            case 3:
+                printf("Enter account number: ");
+                scanf("%d", &account_number);
+                sprintf(buffer, "passbook %d", account_number);
+                send(client_socket, buffer, strlen(buffer), 0);
+                recv(client_socket, buffer, sizeof(buffer), 0);
+                printf("Server response: %s\n", buffer);
+                break;
+            case 4:
+                return;
+            default:
+                printf("Invalid choice. Please try again.\n");
+                break;
+        }
+    }
 }
