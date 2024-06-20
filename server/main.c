@@ -84,16 +84,44 @@ void handle_client(int client_socket, Bank *bank, int sem_id) {
     int account_number;
     double amount;
 
-    // Example interaction: deposit money
+    // Receive command from client
     recv(client_socket, buffer, sizeof(buffer), 0);
-    sscanf(buffer, "deposit %d %lf", &account_number, &amount);
-
-    acquire_semaphore(sem_id);
-    deposit_money(bank, account_number, amount);
-    release_semaphore(sem_id);
-
-    sprintf(buffer, "Deposited %.2f to account number %d.", amount, account_number);
-    send(client_socket, buffer, strlen(buffer), 0);
+    
+    if (strncmp(buffer, "deposit", 7) == 0) {
+        sscanf(buffer, "deposit %d %lf", &account_number, &amount);
+        acquire_semaphore(sem_id);
+        deposit_money(bank, account_number, amount);
+        release_semaphore(sem_id);
+        sprintf(buffer, "Deposited %.2f to account number %d.", amount, account_number);
+        send(client_socket, buffer, strlen(buffer), 0);
+    } else if (strncmp(buffer, "withdraw", 8) == 0) {
+        sscanf(buffer, "withdraw %d %lf", &account_number, &amount);
+        acquire_semaphore(sem_id);
+        withdraw_money(bank, account_number, amount);
+        release_semaphore(sem_id);
+        sprintf(buffer, "Withdrew %.2f from account number %d.", amount, account_number);
+        send(client_socket, buffer, strlen(buffer), 0);
+    } else if (strncmp(buffer, "passbook", 8) == 0) {
+        sscanf(buffer, "passbook %d", &account_number);
+        acquire_semaphore(sem_id);
+        Customer *customer = get_customer(bank, account_number);
+        if (customer != NULL) {
+            // Prepare passbook entries to send to client
+            int len = sprintf(buffer, "Passbook for account number %d:\n", account_number);
+            for (int i = 0; i < customer->passbook_entry_count; i++) {
+                len += sprintf(buffer + len, "Entry %d: %s - Amount: %.2f - Balance after: %.2f\n",
+                               customer->passbook[i].entry_number,
+                               customer->passbook[i].description,
+                               customer->passbook[i].amount,
+                               customer->passbook[i].balance_after);
+            }
+            send(client_socket, buffer, len, 0);
+        } else {
+            sprintf(buffer, "Customer with account number %d not found.", account_number);
+            send(client_socket, buffer, strlen(buffer), 0);
+        }
+        release_semaphore(sem_id);
+    }
 }
 
 void setup_ipc(int *shm_id, Bank **bank, int *sem_id) {
@@ -130,4 +158,3 @@ void release_semaphore(int sem_id) {
     struct sembuf sb = {0, 1, 0}; // Increment semaphore by 1
     semop(sem_id, &sb, 1);
 }
-
